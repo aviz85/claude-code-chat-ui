@@ -13,8 +13,8 @@ export default function ThemeSelector() {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   const currentTheme = themeList.find(t => t.id === themeId)
@@ -48,7 +48,7 @@ export default function ThemeSelector() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 overflow-hidden border"
+          className="absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-[9999] overflow-hidden border"
           style={{
             background: theme.colors.bgSecondary,
             borderColor: theme.colors.border,
@@ -68,7 +68,8 @@ export default function ThemeSelector() {
           {themeList.map((t) => (
             <button
               key={t.id}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
                 setTheme(t.id as ThemeId)
                 setIsOpen(false)
               }}

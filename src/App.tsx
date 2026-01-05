@@ -169,7 +169,7 @@ function ChatApp() {
 
       {/* Header */}
       <header
-        className="border-b backdrop-blur-sm relative z-10"
+        className="border-b backdrop-blur-sm relative z-50"
         style={{
           background: `${theme.colors.bgSecondary}cc`,
           borderColor: theme.colors.border,
