@@ -1,5 +1,15 @@
-import { useState, useRef, useEffect, KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, KeyboardEvent, useMemo } from 'react'
 import { useTheme } from '../ThemeContext'
+
+// Hebrew character range: \u0590-\u05FF
+const STARTS_WITH_HEBREW_REGEX = /^[\s\d\-\.\)\]\•\*\#]*[\u0590-\u05FF]/
+
+function getTextDirection(text: string): 'rtl' | 'ltr' {
+  if (STARTS_WITH_HEBREW_REGEX.test(text)) {
+    return 'rtl'
+  }
+  return 'ltr'
+}
 
 interface Props {
   onSend: (message: string) => void
@@ -13,6 +23,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
   const [isFocused, setIsFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isTerminal = themeId === 'terminal'
+  const inputDirection = useMemo(() => getTextDirection(input), [input])
 
   useEffect(() => {
     if (!isLoading) {
@@ -80,6 +91,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
           placeholder={isLoading ? 'Processing...' : 'Type a message...'}
           disabled={isLoading}
           rows={1}
+          dir={inputDirection}
           className="flex-1 bg-transparent border-none resize-none focus:outline-none
                      disabled:opacity-50 min-h-[38px] py-2"
           style={{
@@ -87,6 +99,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
             fontFamily: theme.fonts.body,
             fontSize: '0.9375rem',
             caretColor: theme.colors.primary,
+            textAlign: inputDirection === 'rtl' ? 'right' : 'left',
           }}
         />
 

@@ -2,6 +2,23 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useTheme } from '../ThemeContext'
 
+// Hebrew character range: \u0590-\u05FF
+const HEBREW_REGEX = /[\u0590-\u05FF]/
+// Matches text that starts with optional symbols/numbers followed by Hebrew
+const STARTS_WITH_HEBREW_REGEX = /^[\s\d\-\.\)\]\•\*\#]*[\u0590-\u05FF]/
+
+function getTextDirection(text: string): 'rtl' | 'ltr' {
+  // Check if text starts with Hebrew (after optional leading symbols)
+  if (STARTS_WITH_HEBREW_REGEX.test(text)) {
+    return 'rtl'
+  }
+  return 'ltr'
+}
+
+function hasHebrew(text: string): boolean {
+  return HEBREW_REGEX.test(text)
+}
+
 export interface ToolUse {
   name: string
   input: Record<string, any>
@@ -139,7 +156,9 @@ export default function ChatMessage({ message }: Props) {
           }}
         >
           {isUser ? (
-            <span>{message.content}</span>
+            <span dir={getTextDirection(message.content)} style={{ display: 'block', textAlign: getTextDirection(message.content) === 'rtl' ? 'right' : 'left' }}>
+              {message.content}
+            </span>
           ) : message.content ? (
             <div
               className="prose prose-sm max-w-none"
@@ -212,6 +231,39 @@ export default function ChatMessage({ message }: Props) {
                         {children}
                       </a>
                     )
+                  },
+                  p({ children }) {
+                    const text = String(children)
+                    const dir = getTextDirection(text)
+                    return (
+                      <p dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+                        {children}
+                      </p>
+                    )
+                  },
+                  li({ children }) {
+                    const text = String(children)
+                    const dir = getTextDirection(text)
+                    return (
+                      <li dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+                        {children}
+                      </li>
+                    )
+                  },
+                  h1({ children }) {
+                    const text = String(children)
+                    const dir = getTextDirection(text)
+                    return <h1 dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>{children}</h1>
+                  },
+                  h2({ children }) {
+                    const text = String(children)
+                    const dir = getTextDirection(text)
+                    return <h2 dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>{children}</h2>
+                  },
+                  h3({ children }) {
+                    const text = String(children)
+                    const dir = getTextDirection(text)
+                    return <h3 dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>{children}</h3>
                   },
                 }}
               >
