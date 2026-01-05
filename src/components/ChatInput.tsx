@@ -62,6 +62,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
           border: `1px solid ${isFocused ? theme.colors.primary : theme.colors.border}`,
           borderRadius: theme.borderRadius,
           boxShadow: isFocused ? theme.shadows.md : 'none',
+          flexDirection: inputDirection === 'rtl' ? 'row-reverse' : 'row',
         }}
       >
         {/* Prompt indicator */}
@@ -135,6 +136,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
               fontFamily: theme.fonts.body,
               fontSize: '0.875rem',
               fontWeight: 500,
+              flexDirection: inputDirection === 'rtl' ? 'row-reverse' : 'row',
             }}
             onMouseEnter={(e) => {
               if (input.trim()) {
@@ -153,6 +155,7 @@ export default function ChatInput({ onSend, onStop, isLoading }: Props) {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              style={{ transform: inputDirection === 'rtl' ? 'scaleX(-1)' : 'none' }}
             >
               <path
                 strokeLinecap="round"
