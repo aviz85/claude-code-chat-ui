@@ -57,7 +57,7 @@ app.post('/api/chat', async (req, res) => {
       // Capture session ID from system message
       if (sdkMsg.type === 'system' && 'session_id' in sdkMsg) {
         currentSessionId = sdkMsg.session_id;
-        res.write(`data: ${JSON.stringify({ type: 'session', sessionId: currentSessionId })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'session', sessionId: currentSessionId, cwd: process.cwd() })}\n\n`);
       }
 
       // Stream assistant messages
