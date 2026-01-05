@@ -53,20 +53,26 @@ export function SessionSidebar({
   if (isCollapsed) {
     return (
       <>
-        <button
-          onClick={onToggleCollapse}
-          className="fixed top-4 left-4 z-40 p-2 rounded-lg"
+        <div
+          className="h-screen flex-shrink-0"
           style={{
             background: theme.colors.bgSecondary,
-            border: `1px solid ${theme.colors.border}`,
-            color: theme.colors.text,
+            borderRight: `1px solid ${theme.colors.border}`,
           }}
-          title="Open sessions"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+          <button
+            onClick={onToggleCollapse}
+            className="h-full flex items-center px-1 hover:opacity-80 transition-opacity"
+            style={{
+              color: theme.colors.textSecondary,
+            }}
+            title="Open sessions"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
         <FolderBrowser
           isOpen={showFolderBrowser}
           onClose={() => setShowFolderBrowser(false)}
