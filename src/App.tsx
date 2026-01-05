@@ -9,6 +9,7 @@ function ChatApp() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [workingDir, setWorkingDir] = useState<string | null>(null)
   const [currentTools, setCurrentTools] = useState<ToolUse[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -77,6 +78,9 @@ function ChatApp() {
 
               if (data.type === 'session') {
                 setSessionId(data.sessionId)
+                if (data.cwd) {
+                  setWorkingDir(data.cwd)
+                }
               } else if (data.type === 'content') {
                 fullContent += data.content
                 setMessages(prev =>
@@ -151,6 +155,7 @@ function ChatApp() {
   const clearChat = () => {
     setMessages([])
     setSessionId(null)
+    setWorkingDir(null)
   }
 
   const isTerminal = themeId === 'terminal'
@@ -197,6 +202,32 @@ function ChatApp() {
                 }}
               >
                 {sessionId.slice(0, 8)}
+              </span>
+            )}
+            {workingDir && (
+              <span
+                className="text-xs px-2 py-0.5 rounded flex items-center gap-1.5"
+                style={{
+                  background: theme.colors.bgSecondary,
+                  color: theme.colors.textSecondary,
+                  fontFamily: theme.fonts.mono,
+                  border: `1px solid ${theme.colors.border}`,
+                }}
+                title={workingDir}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                {workingDir.split('/').pop() || workingDir}
               </span>
             )}
           </div>
