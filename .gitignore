@@ -34,3 +34,9 @@ npm-debug.log*
 tmp/
 temp/
 *.tmp
+
+# Claude Code - personal/sensitive data
+.claude/skills/*/references/
+.claude/settings.json
+.claude/todos.json
+server/sessions.json

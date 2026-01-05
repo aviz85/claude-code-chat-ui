@@ -3,6 +3,28 @@ import { ThemeProvider, useTheme } from './ThemeContext'
 import ChatMessage, { Message, ToolUse } from './components/ChatMessage'
 import ChatInput from './components/ChatInput'
 import ThemeSelector from './components/ThemeSelector'
+import { SessionSidebar, SessionData } from './components/SessionSidebar'
+
+// Store messages per session in localStorage
+function getStoredMessages(sessionId: string): Message[] {
+  try {
+    const stored = localStorage.getItem(`messages-${sessionId}`)
+    if (stored) {
+      const messages = JSON.parse(stored)
+      return messages.map((m: any) => ({
+        ...m,
+        timestamp: new Date(m.timestamp),
+      }))
+    }
+  } catch (e) {}
+  return []
+}
+
+function storeMessages(sessionId: string, messages: Message[]): void {
+  try {
+    localStorage.setItem(`messages-${sessionId}`, JSON.stringify(messages))
+  } catch (e) {}
+}
 
 function ChatApp() {
   const { theme, themeId } = useTheme()
@@ -11,8 +33,82 @@ function ChatApp() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [workingDir, setWorkingDir] = useState<string | null>(null)
   const [currentTools, setCurrentTools] = useState<ToolUse[]>([])
+  const [sessions, setSessions] = useState<SessionData[]>([])
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Load sessions from server on mount
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const res = await fetch('/api/sessions')
+        if (res.ok) {
+          const data = await res.json()
+          setSessions(data.sessions)
+        }
+      } catch (e) {
+        console.error('Failed to load sessions:', e)
+      }
+    }
+    loadSessions()
+  }, [])
+
+  // Store messages when they change
+  useEffect(() => {
+    if (sessionId && messages.length > 0) {
+      storeMessages(sessionId, messages)
+    }
+  }, [sessionId, messages])
+
+  // Create new session
+  const createSession = async (cwd: string) => {
+    try {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cwd }),
+      })
+      if (res.ok) {
+        const newSession: SessionData = await res.json()
+        setSessions(prev => [...prev, newSession])
+        selectSession(newSession.sessionId)
+      }
+    } catch (e) {
+      console.error('Failed to create session:', e)
+    }
+  }
+
+  // Select a session
+  const selectSession = (id: string) => {
+    const session = sessions.find(s => s.sessionId === id)
+    if (session) {
+      setSessionId(id)
+      setWorkingDir(session.cwd)
+      setMessages(getStoredMessages(id))
+      setCurrentTools([])
+    }
+  }
+
+  // Delete a session
+  const deleteSession = async (id: string) => {
+    try {
+      const res = await fetch(`/api/sessions/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setSessions(prev => prev.filter(s => s.sessionId !== id))
+        localStorage.removeItem(`messages-${id}`)
+        if (sessionId === id) {
+          setSessionId(null)
+          setWorkingDir(null)
+          setMessages([])
+        }
+      }
+    } catch (e) {
+      console.error('Failed to delete session:', e)
+    }
+  }
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -77,10 +173,17 @@ function ChatApp() {
               const data = JSON.parse(line.slice(6))
 
               if (data.type === 'session') {
-                setSessionId(data.sessionId)
+                const newSessionId = data.sessionId
+                setSessionId(newSessionId)
                 if (data.cwd) {
                   setWorkingDir(data.cwd)
                 }
+                // Update sessions list with new SDK session ID
+                setSessions(prev => prev.map(s =>
+                  s.sessionId === sessionId && s.sessionId !== newSessionId
+                    ? { ...s, sessionId: newSessionId }
+                    : s
+                ))
               } else if (data.type === 'content') {
                 fullContent += data.content
                 setMessages(prev =>
@@ -161,18 +264,30 @@ function ChatApp() {
   const isTerminal = themeId === 'terminal'
 
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{
-        background: theme.colors.bg,
-        fontFamily: theme.fonts.body,
-        color: theme.colors.text,
-      }}
-    >
-      {/* CRT effects only for terminal theme */}
-      {isTerminal && <div className="crt-overlay" />}
+    <div className="flex h-screen" style={{ background: theme.colors.bg }}>
+      {/* Session Sidebar */}
+      <SessionSidebar
+        sessions={sessions}
+        activeSessionId={sessionId}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onSelectSession={selectSession}
+        onCreateSession={createSession}
+        onDeleteSession={deleteSession}
+      />
 
-      {/* Header */}
+      {/* Main Content */}
+      <div
+        className="flex-1 flex flex-col relative overflow-hidden"
+        style={{
+          fontFamily: theme.fonts.body,
+          color: theme.colors.text,
+        }}
+      >
+        {/* CRT effects only for terminal theme */}
+        {isTerminal && <div className="crt-overlay" />}
+
+        {/* Header */}
       <header
         className="border-b backdrop-blur-sm relative z-50"
         style={{
@@ -376,6 +491,7 @@ function ChatApp() {
           />
         </div>
       </footer>
+      </div>
     </div>
   )
 }
