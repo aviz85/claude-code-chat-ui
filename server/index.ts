@@ -114,7 +114,12 @@ app.post('/api/chat', async (req, res) => {
           res.write(`data: ${JSON.stringify({ type: 'content', content })}\n\n`);
         } else if (Array.isArray(content)) {
           for (const block of content) {
-            if (block.type === 'text' && block.text) {
+            if (block.type === 'thinking' && 'thinking' in block) {
+              res.write(`data: ${JSON.stringify({
+                type: 'thinking',
+                content: block.thinking
+              })}\n\n`);
+            } else if (block.type === 'text' && block.text) {
               fullResponse += block.text;
               res.write(`data: ${JSON.stringify({ type: 'content', content: block.text })}\n\n`);
             } else if (block.type === 'tool_use') {

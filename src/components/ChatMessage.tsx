@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useTheme } from '../ThemeContext'
@@ -32,6 +33,8 @@ export interface Message {
   timestamp: Date
   isStreaming?: boolean
   isError?: boolean
+  isThinking?: boolean
+  thinking?: string
   tools?: ToolUse[]
   usage?: {
     input_tokens: number
@@ -62,6 +65,7 @@ function formatToolInput(input: Record<string, any>): string {
 
 export default function ChatMessage({ message }: Props) {
   const { theme, themeId } = useTheme()
+  const [showThinking, setShowThinking] = useState(false)
   const isUser = message.role === 'user'
   const isTerminal = themeId === 'terminal'
 
@@ -105,6 +109,77 @@ export default function ChatMessage({ message }: Props) {
                 />
                 typing...
               </span>
+            )}
+          </div>
+        )}
+
+        {/* Thinking indicator */}
+        {(message.isThinking || message.thinking) && (
+          <div className="mb-3">
+            <button
+              onClick={() => setShowThinking(!showThinking)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded text-xs w-full transition-colors"
+              style={{
+                background: theme.colors.primary + '15',
+                borderLeft: `2px solid ${theme.colors.primary}`,
+                fontFamily: theme.fonts.mono,
+              }}
+            >
+              {message.isThinking && !message.thinking ? (
+                <>
+                  <span className="flex gap-1">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full animate-bounce"
+                      style={{ background: theme.colors.primary, animationDelay: '0ms' }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full animate-bounce"
+                      style={{ background: theme.colors.primary, animationDelay: '150ms' }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full animate-bounce"
+                      style={{ background: theme.colors.primary, animationDelay: '300ms' }}
+                    />
+                  </span>
+                  <span style={{ color: theme.colors.primary }}>Thinking...</span>
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{
+                      color: theme.colors.primary,
+                      transform: showThinking ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                  >
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                  <span style={{ color: theme.colors.primary }}>Thinking</span>
+                  <span style={{ color: theme.colors.textMuted }}>
+                    ({message.thinking?.length || 0} chars)
+                  </span>
+                </>
+              )}
+            </button>
+            {showThinking && message.thinking && (
+              <div
+                className="mt-2 px-3 py-2 rounded text-xs overflow-auto max-h-64"
+                style={{
+                  background: theme.colors.bgTertiary,
+                  border: `1px solid ${theme.colors.border}`,
+                  fontFamily: theme.fonts.mono,
+                  color: theme.colors.textMuted,
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {message.thinking}
+              </div>
             )}
           </div>
         )}

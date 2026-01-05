@@ -140,6 +140,8 @@ function ChatApp() {
       content: '',
       timestamp: new Date(),
       isStreaming: true,
+      isThinking: true,
+      thinking: '',
       tools: [],
     }
     setMessages(prev => [...prev, assistantMessage])
@@ -184,7 +186,21 @@ function ChatApp() {
                     ? { ...s, sessionId: newSessionId }
                     : s
                 ))
+              } else if (data.type === 'thinking') {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, thinking: (m.thinking || '') + data.content, isThinking: true }
+                      : m
+                  )
+                )
               } else if (data.type === 'content') {
+                // When content starts, thinking is done
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId ? { ...m, isThinking: false } : m
+                  )
+                )
                 fullContent += data.content
                 setMessages(prev =>
                   prev.map(m =>
@@ -216,7 +232,7 @@ function ChatApp() {
               } else if (data.type === 'done') {
                 setMessages(prev =>
                   prev.map(m =>
-                    m.id === assistantId ? { ...m, isStreaming: false } : m
+                    m.id === assistantId ? { ...m, isStreaming: false, isThinking: false } : m
                   )
                 )
               } else if (data.type === 'error') {
